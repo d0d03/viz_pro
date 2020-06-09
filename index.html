@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <script src="https://d3js.org/d3.v3.min.js"></script>
+        <style>
+            body{
+                margin-top: 225px;
+            }
+            line{
+                stroke: #000;
+                stroke-width: 1.5px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <script>
+          var width = 960;
+          var height = 50;
+
+          var n = 250;
+          var x = d3.scale.linear().domain([0, n]).range([height, width - height]);
+          var a = d3.scale.linear().domain([0, n - 1]).range([90 + 60, 270 - 60]);
+          var data = d3.shuffle(d3.range(n));
+          var duration = 250;
+
+          var svg = d3.select("body").append("svg")
+            .attr("width",width)
+            .attr("height", height);
+
+          var line = svg.selectAll("line")
+              .data(data)
+              .enter()
+              .append("line")
+              .attr("x1",0)
+              .attr("y1",0)
+              .attr("x2",0)
+              .attr("y2", height)
+              .attr("transform",transform);
+
+          function transform(d,i){
+              //obavlja translaciju i rotaciju podatka nakon skaliranja
+              return "translate(" + x(i) + "," + height + ")rotate(" + a(d) + ")";
+          }
+
+          var bubbSort = function(l) {
+              update(data);
+              if (l == 0) return;
+              for (i = 0; i < l; i++) {
+                  if (data[i] < data[i + 1]) {
+                      let temp = data[i];
+                      data[i] = data[i+1];
+                      data[i+1] = temp;
+                  }
+              }
+              setTimeout(function() {
+                  bubbSort(l - 1);
+              }, 100);
+          };
+          bubbSort(n-1);
+
+          function update(newData){
+              svg.selectAll("line")
+              .data(data).exit().remove();
+
+              line.data(newData)
+              .transition()
+              .duration(duration)
+              .attr("transform",transform);
+          }
+        </script>
+    </body>
+</html>
