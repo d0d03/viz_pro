@@ -2,28 +2,39 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <script src="https://d3js.org/d3.v3.min.js"></script>
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
         <style>
             body{
                 margin-top: 225px;
             }
             line{
-                stroke: #000;
                 stroke-width: 1.5px;
             }
         </style>
     </head>
 
     <body>
+            <label for="cpalet">Choose a color palet: </label>
+            <select name="cpalet" id="cpalet" onchange="changeColor(this)">
+                <option value="Rainbow">Rainbow</option>
+                <option value="Inferno">Inferno</option>
+                <option value="Cool">Cool</option>
+                <option value="Viridis">Viridis</option>
+            </select>
+            <button name="btnSort" id="btnSort" onclick="bubbSort(n-1)">Sort</button>
+            <button name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
+            <br/><br/>
         <script>
           var width = 960;
           var height = 50;
 
           var n = 250;
-          var x = d3.scale.linear().domain([0, n]).range([height, width - height]);
-          var a = d3.scale.linear().domain([0, n - 1]).range([90 + 60, 270 - 60]);
+          var x = d3.scaleLinear().domain([0, n]).range([height, width - height]);
+          var a = d3.scaleLinear().domain([0, n - 1]).range([90 + 60, 270 - 60]);
           var data = d3.shuffle(d3.range(n));
           var duration = 250;
+          var colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
 
           var svg = d3.select("body").append("svg")
             .attr("width",width)
@@ -37,6 +48,7 @@
               .attr("y1",0)
               .attr("x2",0)
               .attr("y2", height)
+              .attr("stroke",function(d,i){ return colors(i); })
               .attr("transform",transform);
 
           function transform(d,i){
@@ -58,7 +70,6 @@
                   bubbSort(l - 1);
               }, 100);
           };
-          bubbSort(n-1);
 
           function update(newData){
               svg.selectAll("line")
@@ -68,6 +79,40 @@
               .transition()
               .duration(duration)
               .attr("transform",transform);
+          }
+
+          function changeColor(e) {
+              chosenOne = e.options[e.selectedIndex].value;
+              switch (chosenOne) {
+                  case "Rainbow":
+                      colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
+                      break;
+                  case "Inferno":
+                      colors = d3.scaleSequential().interpolator(d3.interpolateInferno).domain([0,n]);
+                      break;
+                  case "Cool":
+                      colors = d3.scaleSequential().interpolator(d3.interpolateCool).domain([0,n]);
+                      break;
+                  case "Viridis":
+                      colors = d3.scaleSequential().interpolator(d3.interpolateViridis).domain([0,n]);
+                      break;
+              }
+          }
+
+          function randomize(){
+              data = [];
+              line.data(data).exit().remove();
+
+              data = d3.shuffle(d3.range(n));
+              line = svg.selectAll("line").data(data)
+                  .enter()
+                  .append("line")
+                  .attr("x1",0)
+                  .attr("y1",0)
+                  .attr("x2",0)
+                  .attr("y2", height)
+                  .attr("stroke",function(d,i){ return colors(i); })
+                  .attr("transform",transform);
           }
         </script>
     </body>
