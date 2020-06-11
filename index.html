@@ -15,16 +15,23 @@
     </head>
 
     <body>
-            <label for="cpalet">Choose a color palet: </label>
-            <select name="cpalet" id="cpalet" onchange="changeColor(this)">
+            <label for="sAlg">Choose sorting algorithm: </label>
+            <select name="sAlg" id="sAlg" onchange="changeAlgorithm()">
+                <option value = "Bubble">Bubble sort</option>
+                <option value = "Select">Selection sort</option>
+            </select>
+            <br/>
+            <label for="cpalette">Choose a color palet: </label>
+            <select name="cpalette" id="cpalette" onchange="changeColor()">
                 <option value="Rainbow">Rainbow</option>
                 <option value="Inferno">Inferno</option>
                 <option value="Cool">Cool</option>
                 <option value="Viridis">Viridis</option>
             </select>
-            <button name="btnSort" id="btnSort" onclick="bubbSort(n-1)">Sort</button>
+            <br/>
+            <button name="btnSort" id="btnSort" onclick="toggleButtons();sortAlgorithm(n);">Sort</button>
             <button name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
-            <br/><br/>
+            <br/>
         <script>
           var width = 960;
           var height = 50;
@@ -57,8 +64,12 @@
           }
 
           var bubbSort = function(l) {
+              console.log("doing bubble");
               update(data);
-              if (l == 0) return;
+              if (l == 0) {
+                  toggleButtons();
+                  return;
+              }
               for (i = 0; i < l; i++) {
                   if (data[i] < data[i + 1]) {
                       let temp = data[i];
@@ -67,9 +78,33 @@
                   }
               }
               setTimeout(function() {
-                  bubbSort(l - 1);
+                  bubbSort(l-1);
               }, 100);
           };
+
+          var selectSort = function(l){
+              console.log("doing selection");
+              update(data);
+              if(l == 0) {
+                  toggleButtons();
+                  return;
+              }
+              for (let i = 0; i <= l; i++){
+                  let min = i;
+                  for(let j = i + 1; j < l+1; j++){
+                      if(data[j] < data[min]){
+                          let temp = data[i];
+                          data[i] = data[i+1];
+                          data[i+1] = temp;
+                      }
+                  }
+              }
+              setTimeout(function() {
+                  selectSort(l-1);
+              }, 100);
+          };
+
+          var sortAlgorithm = bubbSort;
 
           function update(newData){
               svg.selectAll("line")
@@ -81,8 +116,8 @@
               .attr("transform",transform);
           }
 
-          function changeColor(e) {
-              chosenOne = e.options[e.selectedIndex].value;
+          function changeColor() {
+              let chosenOne = document.getElementById("cpalette").value;
               switch (chosenOne) {
                   case "Rainbow":
                       colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
@@ -114,6 +149,27 @@
                   .attr("y2", height)
                   .attr("stroke",function(d,i){ return colors(i); })
                   .attr("transform",transform);
+          }
+
+          function changeAlgorithm(){
+              let chosenOne = document.getElementById('sAlg').value;
+              switch (chosenOne) {
+                  case "Select":
+                      sortAlgorithm = selectSort;
+                      break;
+                  default:
+                      sortAlgorithm = bubbSort;
+                      break;
+              }
+          }
+
+          function toggleButtons(){
+              var btns = document.getElementsByTagName("button");
+              for (let btn of btns) {
+                  if(btn.disabled){
+                      btn.disabled = false;
+                  }else{ btn.disabled = true; }
+              }
           }
         </script>
     </body>
