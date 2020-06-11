@@ -97,6 +97,7 @@
                       colors = d3.scaleSequential().interpolator(d3.interpolateViridis).domain([0,n]);
                       break;
               }
+              line.attr("stroke",function(d,i){ return colors(i); });
           }
 
           function randomize(){
