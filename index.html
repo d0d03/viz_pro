@@ -4,173 +4,191 @@
         <meta charset="utf-8">
         <script src="https://d3js.org/d3.v4.min.js"></script>
         <script src="//d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
         <style>
-            body{
-                margin-top: 225px;
-            }
             line{
                 stroke-width: 1.5px;
+            }
+            main{
+                height:457px
             }
         </style>
     </head>
 
     <body>
-            <label for="sAlg">Choose sorting algorithm: </label>
-            <select name="sAlg" id="sAlg" onchange="changeAlgorithm()">
-                <option value = "Bubble">Bubble sort</option>
-                <option value = "Select">Selection sort</option>
-            </select>
-            <br/>
-            <label for="cpalette">Choose a color palet: </label>
-            <select name="cpalette" id="cpalette" onchange="changeColor()">
-                <option value="Rainbow">Rainbow</option>
-                <option value="Inferno">Inferno</option>
-                <option value="Cool">Cool</option>
-                <option value="Viridis">Viridis</option>
-            </select>
-            <br/>
-            <button name="btnSort" id="btnSort" onclick="toggleButtons();sortAlgorithm(n);">Sort</button>
-            <button name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
-            <br/>
+        <header class="jumbotron text-center" style="margin-bottom: 0">
+            <h1>Sorting algorithm visualization</h1>
+        </header>
+        <div class="container-fluid p-4 bg-dark text-white">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class= for="sAlg">Choose sorting algorithm: </label>
+                    <select name="sAlg" id="sAlg" onchange="changeAlgorithm()">
+                        <option value = "Bubble">Bubble sort</option>
+                        <option value = "Select">Selection sort</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="cpalette">Choose a color palet: </label>
+                    <select name="cpalette" id="cpalette" onchange="changeColor()">
+                        <option value="Rainbow">Rainbow</option>
+                        <option value="Inferno">Inferno</option>
+                        <option value="Cool">Cool</option>
+                        <option value="Viridis">Viridis</option>
+                    </select>
+                </div>
+                <button class="btn-primary col-md-3" name="btnSort" id="btnSort" onclick="toggleButtons();sortAlgorithm(n);">Sort</button>
+                <button class="btn-primary col-md-3" name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
+            </div>
+        </div>
+
+        <main class="d-flex justify-content-center" style="background-color: black">
+
+        </main>
+
         <script>
-          var width = 960;
-          var height = 50;
+            var width = screen.availWidth;
+            var height = 250;
 
-          var n = 250;
-          var x = d3.scaleLinear().domain([0, n]).range([height, width - height]);
-          var a = d3.scaleLinear().domain([0, n - 1]).range([90 + 60, 270 - 60]);
-          var data = d3.shuffle(d3.range(n));
-          var duration = 250;
-          var colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
+            var n =250;
+            var x = d3.scaleLinear().domain([0, n]).range([height,width-height]);
+            var a = d3.scaleLinear().domain([0, n-1]).range([90 + 60, 270 - 60]);
+            var data = d3.shuffle(d3.range(n));
+            var duration = 250;
+            var colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
 
-          var svg = d3.select("body").append("svg")
-            .attr("width",width)
-            .attr("height", height);
+            var svg = d3.select("main").append("svg")
+                .attr("width",width)
+                .attr("height", height)
+                .attr("style","margin:50");
 
-          var line = svg.selectAll("line")
-              .data(data)
-              .enter()
-              .append("line")
-              .attr("x1",0)
-              .attr("y1",0)
-              .attr("x2",0)
-              .attr("y2", height)
-              .attr("stroke",function(d,i){ return colors(i); })
-              .attr("transform",transform);
+            var line = svg.selectAll("line")
+                .data(data)
+                .enter()
+                .append("line")
+                .attr("x1",0)
+                .attr("y1",0)
+                .attr("x2",0)
+                .attr("y2", height)
+                .attr("stroke",function(d,i){ return colors(i); })
+                .attr("transform",transform);
 
-          function transform(d,i){
-              //obavlja translaciju i rotaciju podatka nakon skaliranja
-              return "translate(" + x(i) + "," + height + ")rotate(" + a(d) + ")";
-          }
+            function transform(d,i){
+                //obavlja translaciju i rotaciju podatka nakon skaliranja
+                return "translate(" + x(i) + "," + height + ")rotate(" + a(d) + ")";
+            }
 
-          var bubbSort = function(l) {
-              console.log("doing bubble");
-              update(data);
-              if (l == 0) {
-                  toggleButtons();
-                  return;
-              }
-              for (i = 0; i < l; i++) {
-                  if (data[i] < data[i + 1]) {
-                      let temp = data[i];
-                      data[i] = data[i+1];
-                      data[i+1] = temp;
-                  }
-              }
-              setTimeout(function() {
-                  bubbSort(l-1);
-              }, 100);
-          };
+            var bubbSort = function(l) {
+                console.log("doing bubble");
+                update(data);
+                if (l == 0) {
+                    toggleButtons();
+                    return;
+                }
+                for (let i = 0; i < l; i++) {
+                    if (data[i] < data[i + 1]) {
+                        let temp = data[i];
+                        data[i] = data[i+1];
+                        data[i+1] = temp;
+                    }
+                }
+                setTimeout(function() {
+                    bubbSort(l-1);
+                }, 100);
+            };
 
-          var selectSort = function(l){
-              console.log("doing selection");
-              update(data);
-              if(l == 0) {
-                  toggleButtons();
-                  return;
-              }
-              for (let i = 0; i <= l; i++){
-                  let min = i;
-                  for(let j = i + 1; j < l+1; j++){
-                      if(data[j] < data[min]){
-                          let temp = data[i];
-                          data[i] = data[i+1];
-                          data[i+1] = temp;
-                      }
-                  }
-              }
-              setTimeout(function() {
-                  selectSort(l-1);
-              }, 100);
-          };
+            var selectSort = function(l){
+                console.log("doing selection");
+                update(data);
+                if(l == 0) {
+                    toggleButtons();
+                    return;
+                }
+                for (let i = 0; i <= l; i++){
+                    let min = i;
+                    for(let j = i + 1; j < l+1; j++){
+                        if(data[j] < data[min]){
+                            let temp = data[i];
+                            data[i] = data[i+1];
+                            data[i+1] = temp;
+                        }
+                    }
+                }
+                setTimeout(function() {
+                    selectSort(l-1);
+                }, 100);
+            };
 
-          var sortAlgorithm = bubbSort;
+            var sortAlgorithm = bubbSort;
 
-          function update(newData){
-              svg.selectAll("line")
-              .data(data).exit().remove();
+            function update(newData){
+                svg.selectAll("line")
+                    .data(data).exit().remove();
 
-              line.data(newData)
-              .transition()
-              .duration(duration)
-              .attr("transform",transform);
-          }
+                line.data(newData)
+                    .transition()
+                    .duration(duration)
+                    .attr("transform",transform);
+            }
 
-          function changeColor() {
-              let chosenOne = document.getElementById("cpalette").value;
-              switch (chosenOne) {
-                  case "Rainbow":
-                      colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
-                      break;
-                  case "Inferno":
-                      colors = d3.scaleSequential().interpolator(d3.interpolateInferno).domain([0,n]);
-                      break;
-                  case "Cool":
-                      colors = d3.scaleSequential().interpolator(d3.interpolateCool).domain([0,n]);
-                      break;
-                  case "Viridis":
-                      colors = d3.scaleSequential().interpolator(d3.interpolateViridis).domain([0,n]);
-                      break;
-              }
-              line.attr("stroke",function(d,i){ return colors(i); });
-          }
+            function changeColor() {
+                let chosenOne = document.getElementById("cpalette").value;
+                switch (chosenOne) {
+                    case "Rainbow":
+                        colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
+                        break;
+                    case "Inferno":
+                        colors = d3.scaleSequential().interpolator(d3.interpolateInferno).domain([0,n]);
+                        break;
+                    case "Cool":
+                        colors = d3.scaleSequential().interpolator(d3.interpolateCool).domain([0,n]);
+                        break;
+                    case "Viridis":
+                        colors = d3.scaleSequential().interpolator(d3.interpolateViridis).domain([0,n]);
+                        break;
+                }
+                line.attr("stroke",function(d,i){ return colors(i); });
+            }
 
-          function randomize(){
-              data = [];
-              line.data(data).exit().remove();
+            function randomize(){
+                data = [];
+                line.data(data).exit().remove();
 
-              data = d3.shuffle(d3.range(n));
-              line = svg.selectAll("line").data(data)
-                  .enter()
-                  .append("line")
-                  .attr("x1",0)
-                  .attr("y1",0)
-                  .attr("x2",0)
-                  .attr("y2", height)
-                  .attr("stroke",function(d,i){ return colors(i); })
-                  .attr("transform",transform);
-          }
+                data = d3.shuffle(d3.range(n));
+                line = svg.selectAll("line").data(data)
+                    .enter()
+                    .append("line")
+                    .attr("x1",0)
+                    .attr("y1",0)
+                    .attr("x2",0)
+                    .attr("y2", height)
+                    .attr("stroke",function(d,i){ return colors(i); })
+                    .attr("transform",transform);
+            }
 
-          function changeAlgorithm(){
-              let chosenOne = document.getElementById('sAlg').value;
-              switch (chosenOne) {
-                  case "Select":
-                      sortAlgorithm = selectSort;
-                      break;
-                  default:
-                      sortAlgorithm = bubbSort;
-                      break;
-              }
-          }
+            function changeAlgorithm(){
+                let chosenOne = document.getElementById('sAlg').value;
+                switch (chosenOne) {
+                    case "Select":
+                        sortAlgorithm = selectSort;
+                        break;
+                    default:
+                        sortAlgorithm = bubbSort;
+                        break;
+                }
+            }
 
-          function toggleButtons(){
-              var btns = document.getElementsByTagName("button");
-              for (let btn of btns) {
-                  if(btn.disabled){
-                      btn.disabled = false;
-                  }else{ btn.disabled = true; }
-              }
-          }
+            function toggleButtons(){
+                var btns = document.getElementsByTagName("button");
+                for (let btn of btns) {
+                    if(btn.disabled){
+                        btn.disabled = false;
+                    }else{ btn.disabled = true; }
+                }
+            }
         </script>
     </body>
 </html>
