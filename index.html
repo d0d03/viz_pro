@@ -40,155 +40,153 @@
                         <option value="Viridis">Viridis</option>
                     </select>
                 </div>
-                <button class="btn-primary col-md-3" name="btnSort" id="btnSort" onclick="toggleButtons();sortAlgorithm(n);">Sort</button>
-                <button class="btn-primary col-md-3" name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
+                <button class="btn-primary col-md-2" name="btnSort" id="btnSort" onclick="toggleButtons();sortAlgorithm(data);">Sort</button>
+                <button class="btn-primary col-md-2" name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
+                <button class="btn-danger col-md-2" name="btnStop" id="btnStop" onclick="stop=true">Stop</button>
             </div>
         </div>
 
         <main class="d-flex justify-content-center" style="background-color: black">
+            <script>
+                var width = screen.availWidth;
+                var height = 250;
+                var stop = false;
 
-        </main>
+                var n =250;
+                var x = d3.scaleLinear().domain([0, n]).range([height,width-height]);
+                var a = d3.scaleLinear().domain([0, n-1]).range([90 + 60, 270 - 60]);
+                var data = d3.shuffle(d3.range(n));
+                var duration = 250;
+                var colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
 
-        <script>
-            var width = screen.availWidth;
-            var height = 250;
+                var svg = d3.select("main").append("svg")
+                    .attr("width",width)
+                    .attr("height", height)
+                    .attr("style","margin:50");
 
-            var n =250;
-            var x = d3.scaleLinear().domain([0, n]).range([height,width-height]);
-            var a = d3.scaleLinear().domain([0, n-1]).range([90 + 60, 270 - 60]);
-            var data = d3.shuffle(d3.range(n));
-            var duration = 250;
-            var colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
-
-            var svg = d3.select("main").append("svg")
-                .attr("width",width)
-                .attr("height", height)
-                .attr("style","margin:50");
-
-            var line = svg.selectAll("line")
-                .data(data)
-                .enter()
-                .append("line")
-                .attr("x1",0)
-                .attr("y1",0)
-                .attr("x2",0)
-                .attr("y2", height)
-                .attr("stroke",function(d,i){ return colors(i); })
-                .attr("transform",transform);
-
-            function transform(d,i){
-                //obavlja translaciju i rotaciju podatka nakon skaliranja
-                return "translate(" + x(i) + "," + height + ")rotate(" + a(d) + ")";
-            }
-
-            var bubbSort = function(l) {
-                console.log("doing bubble");
-                update(data);
-                if (l == 0) {
-                    toggleButtons();
-                    return;
-                }
-                for (let i = 0; i < l; i++) {
-                    if (data[i] < data[i + 1]) {
-                        let temp = data[i];
-                        data[i] = data[i+1];
-                        data[i+1] = temp;
-                    }
-                }
-                setTimeout(function() {
-                    bubbSort(l-1);
-                }, 100);
-            };
-
-            var selectSort = function(l){
-                console.log("doing selection");
-                update(data);
-                if(l == 0) {
-                    toggleButtons();
-                    return;
-                }
-                for (let i = 0; i <= l; i++){
-                    let min = i;
-                    for(let j = i + 1; j < l+1; j++){
-                        if(data[j] < data[min]){
-                            let temp = data[i];
-                            data[i] = data[i+1];
-                            data[i+1] = temp;
-                        }
-                    }
-                }
-                setTimeout(function() {
-                    selectSort(l-1);
-                }, 100);
-            };
-
-            var sortAlgorithm = bubbSort;
-
-            function update(newData){
-                svg.selectAll("line")
-                    .data(data).exit().remove();
-
-                line.data(newData)
-                    .transition()
-                    .duration(duration)
-                    .attr("transform",transform);
-            }
-
-            function changeColor() {
-                let chosenOne = document.getElementById("cpalette").value;
-                switch (chosenOne) {
-                    case "Rainbow":
-                        colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
-                        break;
-                    case "Inferno":
-                        colors = d3.scaleSequential().interpolator(d3.interpolateInferno).domain([0,n]);
-                        break;
-                    case "Cool":
-                        colors = d3.scaleSequential().interpolator(d3.interpolateCool).domain([0,n]);
-                        break;
-                    case "Viridis":
-                        colors = d3.scaleSequential().interpolator(d3.interpolateViridis).domain([0,n]);
-                        break;
-                }
-                line.attr("stroke",function(d,i){ return colors(i); });
-            }
-
-            function randomize(){
-                data = [];
-                line.data(data).exit().remove();
-
-                data = d3.shuffle(d3.range(n));
-                line = svg.selectAll("line").data(data)
+                var line = svg.selectAll("line")
+                    .data(data)
                     .enter()
                     .append("line")
                     .attr("x1",0)
                     .attr("y1",0)
                     .attr("x2",0)
-                    .attr("y2", height)
-                    .attr("stroke",function(d,i){ return colors(i); })
-                    .attr("transform",transform);
-            }
+                    .attr("y2", function(d){return d;})
+                    .attr("class", function(d){ return "line" + d; })
+                    .attr("stroke",function(d){ return colors(d); })
+                    .attr("transform",function(d,i){ return "translate(" + x(i) + ")";});
 
-            function changeAlgorithm(){
-                let chosenOne = document.getElementById('sAlg').value;
-                switch (chosenOne) {
-                    case "Select":
-                        sortAlgorithm = selectSort;
-                        break;
-                    default:
-                        sortAlgorithm = bubbSort;
-                        break;
+                var bubbSort = async function(data) {
+                    for (var i = 0; i < n-1; i++) {
+                        console.log(i);
+                        for(var  j = 0; j<n-i-1;j++){
+                            if(stop){
+                                toggleButtons();
+                                return stop=false;
+                            }
+                            if (data[j] < data[j + 1]) {
+                                svg.select(".line" + data[j]).transition().duration(duration).attr("transform", "translate(" + x(j + 1) + ")");
+                                svg.select(".line" + data[j + 1]).transition().duration(duration).attr("transform", "translate(" + x(j) + ")");
+                                let promise = new Promise((resolve, reject) => {
+                                    setTimeout(() => resolve("done!"), 100)
+                                });
+                                await promise;
+                                let temp = data[j];
+                                data[j] = data[j+1];
+                                data[j+1] = temp;
+                            }
+                        }
+                    }
+                    toggleButtons();
                 }
-            }
 
-            function toggleButtons(){
-                var btns = document.getElementsByTagName("button");
-                for (let btn of btns) {
-                    if(btn.disabled){
-                        btn.disabled = false;
-                    }else{ btn.disabled = true; }
+                var selectSort = async function(data){
+                    console.log("doing selection");
+                    for (var i = 0; i < n-1; i++){
+                        if(stop){
+                            toggleButtons();
+                            return stop=false;
+                        }
+                        console.log(i);
+                        var min = i;
+                        for(var j = i + 1; j < n; j++){
+                            if(data[j] < data[min]) {
+                                min = j;
+                            }
+                        }
+                        svg.select(".line" + data[min]).transition().duration(duration).attr("transform", "translate(" + x(i) + ")");
+                        svg.select(".line" + data[i]).transition().duration(duration).attr("transform", "translate(" + x(min) + ")");
+                        let promise = new Promise((resolve, reject) => {
+                            setTimeout(() => resolve("done!"), 100)
+                        });
+                        await promise;
+                        let temp = data[min];
+                        data[min] = data[i];
+                        data[i] = temp;
+                    }
+                    toggleButtons();
+                };
+
+                var sortAlgorithm = bubbSort;
+
+                function changeColor() {
+                    let chosenOne = document.getElementById("cpalette").value;
+                    switch (chosenOne) {
+                        case "Rainbow":
+                            colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
+                            break;
+                        case "Inferno":
+                            colors = d3.scaleSequential().interpolator(d3.interpolateInferno).domain([0,n]);
+                            break;
+                        case "Cool":
+                            colors = d3.scaleSequential().interpolator(d3.interpolateCool).domain([0,n]);
+                            break;
+                        case "Viridis":
+                            colors = d3.scaleSequential().interpolator(d3.interpolateViridis).domain([0,n]);
+                            break;
+                    }
+                    line.attr("stroke",function(d){ return colors(d); });
                 }
-            }
-        </script>
+
+                function randomize(){
+                    stop = false;
+                    data = [];
+                    line.data(data).exit().remove();
+
+                    data = d3.shuffle(d3.range(n));
+                    line = svg.selectAll("line").data(data)
+                        .enter()
+                        .append("line")
+                        .attr("x1",0)
+                        .attr("y1",0)
+                        .attr("x2",0)
+                        .attr("y2", function(d){ return d; })
+                        .attr("class", function(d){ return "line" + d; })
+                        .attr("stroke",function(d){ return colors(d); })
+                        .attr("transform",function(d,i){ return "translate(" + x(i) + ")"; });
+                }
+
+                function changeAlgorithm(){
+                    let chosenOne = document.getElementById('sAlg').value;
+                    switch (chosenOne) {
+                        case "Select":
+                            sortAlgorithm = selectSort;
+                            break;
+                        default:
+                            sortAlgorithm = bubbSort;
+                            break;
+                    }
+                }
+
+                function toggleButtons(){
+                    var btns = document.getElementsByClassName("btn-primary");
+                    for (let btn of btns) {
+                        if(btn.disabled){
+                            btn.disabled = false;
+                        }else{ btn.disabled = true; }
+                    }
+                }
+            </script>
+        </main>
     </body>
 </html>
