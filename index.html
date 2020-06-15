@@ -54,7 +54,6 @@
 
                 var n =250;
                 var x = d3.scaleLinear().domain([0, n]).range([height,width-height]);
-                var a = d3.scaleLinear().domain([0, n-1]).range([90 + 60, 270 - 60]);
                 var data = d3.shuffle(d3.range(n));
                 var duration = 250;
                 var colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
