@@ -29,6 +29,7 @@
                     <select name="sAlg" id="sAlg" onchange="changeAlgorithm()">
                         <option value = "Bubble">Bubble sort</option>
                         <option value = "Select">Selection sort</option>
+                        <option value = "Insert">Insertion sort</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -55,7 +56,7 @@
                 var n =250;
                 var x = d3.scaleLinear().domain([0, n]).range([height,width-height]);
                 var data = d3.shuffle(d3.range(n));
-                var duration = 250;
+                var duration = 1;
                 var colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
 
                 var svg = d3.select("main").append("svg")
@@ -83,11 +84,11 @@
                                 toggleButtons();
                                 return stop=false;
                             }
-                            if (data[j] < data[j + 1]) {
+                            if (data[j] > data[j + 1]) {
                                 svg.select(".line" + data[j]).transition().duration(duration).attr("transform", "translate(" + x(j + 1) + ")");
                                 svg.select(".line" + data[j + 1]).transition().duration(duration).attr("transform", "translate(" + x(j) + ")");
                                 let promise = new Promise((resolve, reject) => {
-                                    setTimeout(() => resolve("done!"), 100)
+                                    setTimeout(() => resolve("done!"), 10)
                                 });
                                 await promise;
                                 let temp = data[j];
@@ -116,7 +117,7 @@
                         svg.select(".line" + data[min]).transition().duration(duration).attr("transform", "translate(" + x(i) + ")");
                         svg.select(".line" + data[i]).transition().duration(duration).attr("transform", "translate(" + x(min) + ")");
                         let promise = new Promise((resolve, reject) => {
-                            setTimeout(() => resolve("done!"), 100)
+                            setTimeout(() => resolve("done!"), 10)
                         });
                         await promise;
                         let temp = data[min];
@@ -125,6 +126,35 @@
                     }
                     toggleButtons();
                 };
+
+                var insertSort = async function(data){
+                    console.log("doing insertion");
+                    for(var i = 1; i < n; i++){
+                        console.log(i);
+                        var sorted = data[i];
+                        var j = i - 1;
+                        while(j >= 0 && data[j] > sorted){
+                            if(stop){
+                                toggleButtons();
+                                return stop=false;
+                            }
+                            svg.select(".line" + data[j]).transition().duration(duration).attr("transform","translate(" + x(j+1) +")");
+                            let promise = new Promise((resolve, reject) => {
+                                setTimeout(() => resolve("done!"), 10)
+                            });
+                            await promise;
+                            data[j+1] = data[j];
+                            j--;
+                        }
+                        svg.select(".line" + sorted).transition().duration(duration).attr("transform","translate(" + x(j+1) + ")");
+                        let promise = new Promise((resolve, reject) => {
+                            setTimeout(() => resolve("done!"), 10)
+                        });
+                        await promise;
+                        data[j+1] = sorted;
+                    }
+                    toggleButtons();
+                }
 
                 var sortAlgorithm = bubbSort;
 
@@ -170,6 +200,9 @@
                     switch (chosenOne) {
                         case "Select":
                             sortAlgorithm = selectSort;
+                            break;
+                        case "Insert":
+                            sortAlgorithm = insertSort;
                             break;
                         default:
                             sortAlgorithm = bubbSort;
