@@ -26,10 +26,11 @@
             <div class="row">
                 <div class="col-md-3">
                     <label class= for="sAlg">Choose sorting algorithm: </label>
-                    <select name="sAlg" id="sAlg" onchange="changeAlgorithm()">
+                    <select name="sAlg" id="sAlg">
                         <option value = "Bubble">Bubble sort</option>
                         <option value = "Select">Selection sort</option>
                         <option value = "Insert">Insertion sort</option>
+                        <option value = "Merge">Merge sort</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -41,7 +42,7 @@
                         <option value="Viridis">Viridis</option>
                     </select>
                 </div>
-                <button class="btn-primary col-md-2" name="btnSort" id="btnSort" onclick="toggleButtons();sortAlgorithm(data);">Sort</button>
+                <button class="btn-primary col-md-2" name="btnSort" id="btnSort" onclick="toggleButtons();changeAlgorithm()">Sort</button>
                 <button class="btn-primary col-md-2" name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
                 <button class="btn-danger col-md-2" name="btnStop" id="btnStop" onclick="stop=true">Stop</button>
             </div>
@@ -76,9 +77,14 @@
                     .attr("stroke",function(d){ return colors(d); })
                     .attr("transform",function(d,i){ return "translate(" + x(i) + ")";});
 
-                var bubbSort = async function(data) {
+                async function waitForSort(){
+                    return new Promise((resolve,reject)=>{
+                       setTimeout(() => resolve("done"),10)
+                    });
+                }
+
+                async function bubbSort(data) {
                     for (var i = 0; i < n-1; i++) {
-                        console.log(i);
                         for(var  j = 0; j<n-i-1;j++){
                             if(stop){
                                 toggleButtons();
@@ -100,14 +106,12 @@
                     toggleButtons();
                 }
 
-                var selectSort = async function(data){
-                    console.log("doing selection");
+                async function selectSort(data){
                     for (var i = 0; i < n-1; i++){
                         if(stop){
                             toggleButtons();
                             return stop=false;
                         }
-                        console.log(i);
                         var min = i;
                         for(var j = i + 1; j < n; j++){
                             if(data[j] < data[min]) {
@@ -116,10 +120,7 @@
                         }
                         svg.select(".line" + data[min]).transition().duration(duration).attr("transform", "translate(" + x(i) + ")");
                         svg.select(".line" + data[i]).transition().duration(duration).attr("transform", "translate(" + x(min) + ")");
-                        let promise = new Promise((resolve, reject) => {
-                            setTimeout(() => resolve("done!"), 10)
-                        });
-                        await promise;
+                        await waitForSort();
                         let temp = data[min];
                         data[min] = data[i];
                         data[i] = temp;
@@ -127,10 +128,8 @@
                     toggleButtons();
                 };
 
-                var insertSort = async function(data){
-                    console.log("doing insertion");
+                async function insertSort(data){
                     for(var i = 1; i < n; i++){
-                        console.log(i);
                         var sorted = data[i];
                         var j = i - 1;
                         while(j >= 0 && data[j] > sorted){
@@ -156,7 +155,45 @@
                     toggleButtons();
                 }
 
-                var sortAlgorithm = bubbSort;
+                async function mergeSort(data,l,r){
+                    if(l < r){
+                        let m = l + (r - 1)/2;
+
+                        mergeSort(data,l,m);
+                        mergeSort(data,m+1,r);
+
+                        merge(data,l,m,r);
+                    }
+                }
+
+                async function merge(data,l,m,r){
+                    var i,j,k;
+                    var n1 = m - l + 1;
+                    var n2 = r - m;
+
+                    var L = new Array(n1);
+                    var R = new Array(n2);
+
+                    for(i = 0;i < n1;i++){ L[i] = data[l+1]; }
+                    for(j = 0;j < n2;j++){ R[j] = data[m+1+j]; }
+
+                    i = 0;
+                    j = 0;
+                    k = l;
+
+                    while(i<n1 && j<n2){
+                        if(L[i] <= R[j]){
+
+
+                            data[k] = L[i];
+                            i++;
+                        }else{
+                            data[k] = R[j];
+                            j++;
+                        }
+                        k++;
+                    }
+                }
 
                 function changeColor() {
                     let chosenOne = document.getElementById("cpalette").value;
@@ -199,13 +236,16 @@
                     let chosenOne = document.getElementById('sAlg').value;
                     switch (chosenOne) {
                         case "Select":
-                            sortAlgorithm = selectSort;
+                            selectSort(data);
                             break;
                         case "Insert":
-                            sortAlgorithm = insertSort;
+                            insertSort(data);
+                            break;
+                        case "Merge":
+                            mergeSort(data,0,(data.length - 1));
                             break;
                         default:
-                            sortAlgorithm = bubbSort;
+                            bubbSort(data);
                             break;
                     }
                 }
