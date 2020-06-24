@@ -9,407 +9,55 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
         <style>
+            body{
+                background-color: black;
+            }
             line{
                 stroke-width: 1.5px;
             }
-            main{
-                height:457px
-            }
         </style>
     </head>
-
     <body>
         <header class="jumbotron text-center" style="margin-bottom: 0">
             <h1>Sorting algorithm visualization</h1>
         </header>
-        <div class="container-fluid p-4 bg-dark text-white">
-            <div class="row">
-                <div class="col-md-4">
-                    <label class= for="sAlg">Choose sorting algorithm: </label>
-                    <select name="sAlg" id="sAlg">
-                        <option value = "Bubble">Bubble sort</option>
-                        <option value = "Select">Selection sort</option>
-                        <option value = "DoubleSelect">Double Selection sort</option>
-                        <option value = "Insert">Insertion sort</option>
-                        <option value = "Gnome">Gnome sort</option>
-                        <option value = "Odd-Even">Odd-Even sort</option>
-                        <option value = "Cocktail">Cocktail sort</option>
-                        <option value = "Merge">Merge sort</option>
-                    </select>
+
+        <nav>
+            <div class="container-fluid p-4 bg-dark text-white">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class= for="sAlg">Choose sorting algorithm: </label>
+                        <select name="sAlg" id="sAlg">
+                            <option value = "Bubble">Bubble sort</option>
+                            <option value = "Select">Selection sort</option>
+                            <option value = "DoubleSelect">Double Selection sort</option>
+                            <option value = "Insert">Insertion sort</option>
+                            <option value = "Gnome">Gnome sort</option>
+                            <option value = "Odd-Even">Odd-Even sort</option>
+                            <option value = "Cocktail">Cocktail sort</option>
+                            <option value = "Merge">Merge sort</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="cpalette">Choose a color palet: </label>
+                        <select name="cpalette" id="cpalette" onchange="changeColor()">
+                            <option value="Rainbow">Rainbow</option>
+                            <option value="Inferno">Inferno</option>
+                            <option value="Cool">Cool</option>
+                            <option value="Viridis">Viridis</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary col-md-2" name="btnSort" id="btnSort" onclick="toggleButtons();changeAlgorithm()">Sort</button>
+                    <button class="btn-primary col-md-2" name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
+                    <button class="btn-danger col-md-1" name="btnStop" id="btnStop" onclick="stop=true">Stop</button>
                 </div>
-                <div class="col-md-3">
-                    <label for="cpalette">Choose a color palet: </label>
-                    <select name="cpalette" id="cpalette" onchange="changeColor()">
-                        <option value="Rainbow">Rainbow</option>
-                        <option value="Inferno">Inferno</option>
-                        <option value="Cool">Cool</option>
-                        <option value="Viridis">Viridis</option>
-                    </select>
-                </div>
-                <button class="btn-primary col-md-2" name="btnSort" id="btnSort" onclick="toggleButtons();changeAlgorithm()">Sort</button>
-                <button class="btn-danger col-md-2" name="btnStop" id="btnStop" onclick="stop=true">Stop</button>
-                <button class="btn-primary col-md-1" name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
             </div>
-        </div>
+        </nav>
 
-        <main class="d-flex justify-content-center" style="background-color: black">
-            <script>
-                var width = screen.availWidth;
-                var height = 250;
-                var stop = false;
-
-                var n = 500;
-                var x = d3.scaleLinear().domain([0, n]).range([height,width-height]);
-                var y = d3.scaleLinear().domain([0, n]).range([0,height]);
-                var data = d3.shuffle(d3.range(n));
-                var duration = 0.5;
-                var colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
-
-                var svg = d3.select("main").append("svg")
-                    .attr("width",width)
-                    .attr("height", height)
-                    .attr("style","margin:50");
-
-                var line = svg.selectAll("line")
-                    .data(data)
-                    .enter()
-                    .append("line")
-                    .attr("x1",0)
-                    .attr("y1",0)
-                    .attr("x2",0)
-                    .attr("y2", function(d){return y(d);})
-                    .attr("class", function(d){ return "line" + d; })
-                    .attr("stroke",function(d){ return colors(d); })
-                    .attr("transform",function(d,i){ return "translate(" + x(i) + ")";});
-
-                async function waitForSwap(xx,yy){
-                    svg.select(".line"+xx).transition().duration(duration).attr("transform","translate(" + x(yy)+")");
-                    return new Promise(resolve=>{
-                        setTimeout(()=>resolve("done"),1);
-                    });
-                }
-
-                async function bubbSort(data) {
-                    for (var i = 0; i < n-1; i++) {
-                        for(var  j = 0; j<n-i-1;j++){
-                            if(stop){
-                                toggleButtons();
-                                return stop=false;
-                            }
-                            if (data[j] > data[j + 1]) {
-                                await waitForSwap(data[j],j+1);
-                                await waitForSwap(data[j+1],j);
-                                let temp = data[j];
-                                data[j] = data[j+1];
-                                data[j+1] = temp;
-                            }
-                        }
-                    }
-                    toggleButtons();
-                }
-
-                async function selectSort(data){
-                    for (var i = 0; i < n-1; i++){
-                        if(stop){
-                            toggleButtons();
-                            return stop=false;
-                        }
-                        var min = i;
-                        for(var j = i + 1; j < n; j++){
-                            if(data[j] < data[min]) {
-                                min = j;
-                            }
-                        }
-                        await waitForSwap(data[min],i);
-                        await waitForSwap(data[i],min);
-                        let temp = data[min];
-                        data[min] = data[i];
-                        data[i] = temp;
-                    }
-                    toggleButtons();
-                };
-
-                async function insertSort(data){
-                    for(var i = 1; i < n; i++){
-                        var sorted = data[i];
-                        var j = i - 1;
-                        while(j >= 0 && data[j] > sorted){
-                            if(stop){
-                                toggleButtons();
-                                return stop=false;
-                            }
-                            await waitForSwap(data[j],j+1);
-                            data[j+1] = data[j];
-                            j--;
-                        }
-                        await waitForSwap(sorted,j+1);
-                        data[j+1] = sorted;
-                    }
-                    toggleButtons();
-                }
-
-                async function gnomeSort(data){
-                    var i = 0;
-
-                    while(i<data.length){
-                        if(stop){
-                            toggleButtons();
-                            return stop=false;
-                        }
-                        if(i==0){ i++; }
-                        if(data[i] >= data[i-1]){ i++; }
-                        else{
-                            await waitForSwap(data[i],i-1);
-                            await waitForSwap(data[i-1],i);
-                            let temp = data[i];
-                            data[i] = data[i-1];
-                            data[i-1] = temp;
-                            i--;
-                        }
-                    }
-                    toggleButtons();
-                }
-
-                async function oddEvenSort(data) {
-                    var flag = false;
-                    while(!flag){
-                        flag=true;
-                        for(var i = 1;i<=(data.length-2);i=i+2){
-                            if(stop){
-                                toggleButtons();
-                                return stop=false;
-                            }
-                            if(data[i]>data[i+1]){
-                                await waitForSwap(data[i],i+1);
-                                await waitForSwap(data[i+1],i);
-                                let temp = data[i];
-                                data[i] = data[i+1];
-                                data[i+1] = temp;
-                                flag = false;
-                            }
-                        }
-                        for(i=0;i<=(data.length - 2);i=i+2){
-                            if(stop){
-                                toggleButtons();
-                                return stop=false;
-                            }
-                            if(data[i]>data[i+1]){
-                                await waitForSwap(data[i],i+1);
-                                await waitForSwap(data[i+1],i);
-                                let temp = data[i];
-                                data[i] = data[i+1];
-                                data[i+1] = temp;
-                                flag = false;
-                            }
-                        }
-                    }
-                    toggleButtons();
-                }
-
-                async function doubleSelectSort(data){
-                    var i,j,k;
-                    for(i=0, j=(data.length-1); i < j; i++, j--){
-                        var min = data[i], max = data[i];
-                        var min_i = i, max_i = i;
-                        for(k=i;k<=j;k++){
-                            if(stop){
-                                toggleButtons();
-                                return stop=false;
-                            }
-                            if(data[k]>max){
-                                max = data[k];
-                                max_i = k;
-                            }
-                            else if(data[k]<min){
-                                min = data[k];
-                                min_i = k;
-                            }
-                        }
-                        await waitForSwap(data[min_i],i);
-                        await waitForSwap(data[i],min_i);
-                        let temp = data[i];
-                        data[i] = data[min_i];
-                        data[min_i] = temp;
-
-                        if(data[min_i] == max){
-                            await waitForSwap(data[min_i],j);
-                            await waitForSwap(data[j],min_i);
-                            let temp = data[j];
-                            data[j] = data[min_i];
-                            data[min_i] = temp;
-                        }else{
-                            await waitForSwap(data[max_i],j);
-                            await waitForSwap(data[j],max_i);
-                            let temp = data[j];
-                            data[j] = data[max_i];
-                            data[max_i] = temp;
-                        }
-                    }
-                    toggleButtons();
-                }
-
-                async function cocktailSort(data) {
-                    var swapped = true;
-                    var start = 0;
-                    var end = data.length;
-
-                    while(swapped==true){
-                        swapped = false;
-
-                        for(var i = start; i < end-1; ++i){
-                            if(stop){
-                                toggleButtons();
-                                return stop=false;
-                            }
-                            if(data[i]>data[i+1]){
-                                await waitForSwap(data[i+1],i);
-                                await waitForSwap(data[i],i+1);
-                                let temp = data[i];
-                                data[i] = data[i+1];
-                                data[i+1] = temp;
-                                swapped = true;
-                            }
-                        }
-                        if(swapped==false){ break; }
-
-                        swapped = false;
-                        end=end-1;
-
-                        for(var i = end - 1; i >= start; i--){
-                            if(stop){
-                                toggleButtons();
-                                return stop=false;
-                            }
-                            if(data[i]>data[i+1]){
-                                await waitForSwap(data[i],i+1);
-                                await waitForSwap(data[i+1],i);
-                                let temp = data[i];
-                                data[i] = data[i+1];
-                                data[i+1] = temp;
-                                swapped = true;
-                            }
-                        }
-                        start=start+1;
-                    }
-                    toggleButtons();
-                }
-
-                async function merge(data,start,mid,end){
-                    var start2 = mid + 1;
-                    if(data[mid]<=data[start2]){ return; }
-                    while(start <= mid && start2 <= end){
-                        if(data[start] <= data[start2]){
-                            start++;
-                        }else{
-                            var value = data[start2];
-                            var index = start2;
-                            while(index != start){
-                                if(stop){
-                                    return;
-                                }
-                                await waitForSwap(data[start],start2);
-                                await waitForSwap(data[index-1],index);
-                                data[index] = data[index-1];
-                                index--;
-                            }
-                            await waitForSwap(value,start);
-                            data[start] = value;
-                            start++;
-                            mid++;
-                            start2++;
-                        }
-                    }
-                }
-               async function mergeSort(data,l,r){
-                   if(stop){
-                       return;
-                   }
-                    if(l<r) {
-                        var m = parseInt(l + (r - l) / 2);
-                        await mergeSort(data, l, m);
-                        await mergeSort(data, m + 1, r);
-                        await merge(data, l, m, r);
-                    }
-                }
-
-                function changeColor() {
-                    let chosenOne = document.getElementById("cpalette").value;
-                    switch (chosenOne) {
-                        case "Rainbow":
-                            colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
-                            break;
-                        case "Inferno":
-                            colors = d3.scaleSequential().interpolator(d3.interpolateInferno).domain([0,n]);
-                            break;
-                        case "Cool":
-                            colors = d3.scaleSequential().interpolator(d3.interpolateCool).domain([0,n]);
-                            break;
-                        case "Viridis":
-                            colors = d3.scaleSequential().interpolator(d3.interpolateViridis).domain([0,n]);
-                            break;
-                    }
-                    line.attr("stroke",function(d){ return colors(d); });
-                }
-
-                function randomize(){
-                    stop = false;
-                    data = [];
-                    line.data(data).exit().remove();
-
-                    data = d3.shuffle(d3.range(n));
-                    line = svg.selectAll("line").data(data)
-                        .enter()
-                        .append("line")
-                        .attr("x1",0)
-                        .attr("y1",0)
-                        .attr("x2",0)
-                        .attr("y2", function(d){ return y(d); })
-                        .attr("class", function(d){ return "line" + d; })
-                        .attr("stroke",function(d){ return colors(d); })
-                        .attr("transform",function(d,i){ return "translate(" + x(i) + ")"; });
-                }
-
-               async function changeAlgorithm(){
-                    let chosenOne = document.getElementById('sAlg').value;
-                    switch (chosenOne) {
-                        case "Select":
-                           await selectSort(data);
-                            break;
-                        case"DoubleSelect":
-                            await doubleSelectSort(data);
-                            break;
-                        case "Insert":
-                            await insertSort(data);
-                            break;
-                        case "Gnome":
-                            await gnomeSort(data);
-                            break;
-                        case "Odd-Even":
-                            await oddEvenSort(data);
-                            break;
-                        case "Cocktail":
-                            await cocktailSort(data);
-                            break;
-                        case "Merge":
-                            await mergeSort(data,0,(data.length-1));
-                            toggleButtons();
-                            break;
-                        default:
-                            await bubbSort(data);
-                            break;
-                    }
-                }
-
-                function toggleButtons(){
-                    var btns = document.getElementsByClassName("btn-primary");
-                    for (let btn of btns) {
-                        if(btn.disabled){
-                            btn.disabled = false;
-                        }else{ btn.disabled = true; }
-                    }
-                    if(stop){randomize();}
-                }
-            </script>
+        <main class="d-flex justify-content-center">
+            <script src="src/initialize.js"></script>
+            <script src="src/app.js"></script>
+            <script src="src/sortingAlgorithms.js"></script>
         </main>
     </body>
 </html>
