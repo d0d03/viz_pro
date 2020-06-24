@@ -24,12 +24,16 @@
         </header>
         <div class="container-fluid p-4 bg-dark text-white">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label class= for="sAlg">Choose sorting algorithm: </label>
                     <select name="sAlg" id="sAlg">
                         <option value = "Bubble">Bubble sort</option>
                         <option value = "Select">Selection sort</option>
+                        <option value = "DoubleSelect">Double Selection sort</option>
                         <option value = "Insert">Insertion sort</option>
+                        <option value = "Gnome">Gnome sort</option>
+                        <option value = "Odd-Even">Odd-Even sort</option>
+                        <option value = "Cocktail">Cocktail sort</option>
                         <option value = "Merge">Merge sort</option>
                     </select>
                 </div>
@@ -43,8 +47,8 @@
                     </select>
                 </div>
                 <button class="btn-primary col-md-2" name="btnSort" id="btnSort" onclick="toggleButtons();changeAlgorithm()">Sort</button>
-                <button class="btn-primary col-md-2" name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
                 <button class="btn-danger col-md-2" name="btnStop" id="btnStop" onclick="stop=true">Stop</button>
+                <button class="btn-primary col-md-1" name="btnRandom" id="btnRandom" onclick="randomize()">Randomize</button>
             </div>
         </div>
 
@@ -54,10 +58,11 @@
                 var height = 250;
                 var stop = false;
 
-                var n =250;
+                var n = 500;
                 var x = d3.scaleLinear().domain([0, n]).range([height,width-height]);
+                var y = d3.scaleLinear().domain([0, n]).range([0,height]);
                 var data = d3.shuffle(d3.range(n));
-                var duration = 1;
+                var duration = 0.5;
                 var colors = d3.scaleSequential().interpolator(d3.interpolateRainbow).domain([0,n]);
 
                 var svg = d3.select("main").append("svg")
@@ -72,14 +77,15 @@
                     .attr("x1",0)
                     .attr("y1",0)
                     .attr("x2",0)
-                    .attr("y2", function(d){return d;})
+                    .attr("y2", function(d){return y(d);})
                     .attr("class", function(d){ return "line" + d; })
                     .attr("stroke",function(d){ return colors(d); })
                     .attr("transform",function(d,i){ return "translate(" + x(i) + ")";});
 
-                async function waitForSort(){
-                    return new Promise((resolve,reject)=>{
-                       setTimeout(() => resolve("done"),10)
+                async function waitForSwap(xx,yy){
+                    svg.select(".line"+xx).transition().duration(duration).attr("transform","translate(" + x(yy)+")");
+                    return new Promise(resolve=>{
+                        setTimeout(()=>resolve("done"),1);
                     });
                 }
 
@@ -91,12 +97,8 @@
                                 return stop=false;
                             }
                             if (data[j] > data[j + 1]) {
-                                svg.select(".line" + data[j]).transition().duration(duration).attr("transform", "translate(" + x(j + 1) + ")");
-                                svg.select(".line" + data[j + 1]).transition().duration(duration).attr("transform", "translate(" + x(j) + ")");
-                                let promise = new Promise((resolve, reject) => {
-                                    setTimeout(() => resolve("done!"), 10)
-                                });
-                                await promise;
+                                await waitForSwap(data[j],j+1);
+                                await waitForSwap(data[j+1],j);
                                 let temp = data[j];
                                 data[j] = data[j+1];
                                 data[j+1] = temp;
@@ -118,9 +120,8 @@
                                 min = j;
                             }
                         }
-                        svg.select(".line" + data[min]).transition().duration(duration).attr("transform", "translate(" + x(i) + ")");
-                        svg.select(".line" + data[i]).transition().duration(duration).attr("transform", "translate(" + x(min) + ")");
-                        await waitForSort();
+                        await waitForSwap(data[min],i);
+                        await waitForSwap(data[i],min);
                         let temp = data[min];
                         data[min] = data[i];
                         data[i] = temp;
@@ -137,61 +138,197 @@
                                 toggleButtons();
                                 return stop=false;
                             }
-                            svg.select(".line" + data[j]).transition().duration(duration).attr("transform","translate(" + x(j+1) +")");
-                            let promise = new Promise((resolve, reject) => {
-                                setTimeout(() => resolve("done!"), 10)
-                            });
-                            await promise;
+                            await waitForSwap(data[j],j+1);
                             data[j+1] = data[j];
                             j--;
                         }
-                        svg.select(".line" + sorted).transition().duration(duration).attr("transform","translate(" + x(j+1) + ")");
-                        let promise = new Promise((resolve, reject) => {
-                            setTimeout(() => resolve("done!"), 10)
-                        });
-                        await promise;
+                        await waitForSwap(sorted,j+1);
                         data[j+1] = sorted;
                     }
                     toggleButtons();
                 }
 
-                async function mergeSort(data,l,r){
-                    if(l < r){
-                        let m = l + (r - 1)/2;
+                async function gnomeSort(data){
+                    var i = 0;
 
-                        mergeSort(data,l,m);
-                        mergeSort(data,m+1,r);
-
-                        merge(data,l,m,r);
+                    while(i<data.length){
+                        if(stop){
+                            toggleButtons();
+                            return stop=false;
+                        }
+                        if(i==0){ i++; }
+                        if(data[i] >= data[i-1]){ i++; }
+                        else{
+                            await waitForSwap(data[i],i-1);
+                            await waitForSwap(data[i-1],i);
+                            let temp = data[i];
+                            data[i] = data[i-1];
+                            data[i-1] = temp;
+                            i--;
+                        }
                     }
+                    toggleButtons();
                 }
 
-                async function merge(data,l,m,r){
-                    var i,j,k;
-                    var n1 = m - l + 1;
-                    var n2 = r - m;
-
-                    var L = new Array(n1);
-                    var R = new Array(n2);
-
-                    for(i = 0;i < n1;i++){ L[i] = data[l+1]; }
-                    for(j = 0;j < n2;j++){ R[j] = data[m+1+j]; }
-
-                    i = 0;
-                    j = 0;
-                    k = l;
-
-                    while(i<n1 && j<n2){
-                        if(L[i] <= R[j]){
-
-
-                            data[k] = L[i];
-                            i++;
-                        }else{
-                            data[k] = R[j];
-                            j++;
+                async function oddEvenSort(data) {
+                    var flag = false;
+                    while(!flag){
+                        flag=true;
+                        for(var i = 1;i<=(data.length-2);i=i+2){
+                            if(stop){
+                                toggleButtons();
+                                return stop=false;
+                            }
+                            if(data[i]>data[i+1]){
+                                await waitForSwap(data[i],i+1);
+                                await waitForSwap(data[i+1],i);
+                                let temp = data[i];
+                                data[i] = data[i+1];
+                                data[i+1] = temp;
+                                flag = false;
+                            }
                         }
-                        k++;
+                        for(i=0;i<=(data.length - 2);i=i+2){
+                            if(stop){
+                                toggleButtons();
+                                return stop=false;
+                            }
+                            if(data[i]>data[i+1]){
+                                await waitForSwap(data[i],i+1);
+                                await waitForSwap(data[i+1],i);
+                                let temp = data[i];
+                                data[i] = data[i+1];
+                                data[i+1] = temp;
+                                flag = false;
+                            }
+                        }
+                    }
+                    toggleButtons();
+                }
+
+                async function doubleSelectSort(data){
+                    var i,j,k;
+                    for(i=0, j=(data.length-1); i < j; i++, j--){
+                        var min = data[i], max = data[i];
+                        var min_i = i, max_i = i;
+                        for(k=i;k<=j;k++){
+                            if(stop){
+                                toggleButtons();
+                                return stop=false;
+                            }
+                            if(data[k]>max){
+                                max = data[k];
+                                max_i = k;
+                            }
+                            else if(data[k]<min){
+                                min = data[k];
+                                min_i = k;
+                            }
+                        }
+                        await waitForSwap(data[min_i],i);
+                        await waitForSwap(data[i],min_i);
+                        let temp = data[i];
+                        data[i] = data[min_i];
+                        data[min_i] = temp;
+
+                        if(data[min_i] == max){
+                            await waitForSwap(data[min_i],j);
+                            await waitForSwap(data[j],min_i);
+                            let temp = data[j];
+                            data[j] = data[min_i];
+                            data[min_i] = temp;
+                        }else{
+                            await waitForSwap(data[max_i],j);
+                            await waitForSwap(data[j],max_i);
+                            let temp = data[j];
+                            data[j] = data[max_i];
+                            data[max_i] = temp;
+                        }
+                    }
+                    toggleButtons();
+                }
+
+                async function cocktailSort(data) {
+                    var swapped = true;
+                    var start = 0;
+                    var end = data.length;
+
+                    while(swapped==true){
+                        swapped = false;
+
+                        for(var i = start; i < end-1; ++i){
+                            if(stop){
+                                toggleButtons();
+                                return stop=false;
+                            }
+                            if(data[i]>data[i+1]){
+                                await waitForSwap(data[i+1],i);
+                                await waitForSwap(data[i],i+1);
+                                let temp = data[i];
+                                data[i] = data[i+1];
+                                data[i+1] = temp;
+                                swapped = true;
+                            }
+                        }
+                        if(swapped==false){ break; }
+
+                        swapped = false;
+                        end=end-1;
+
+                        for(var i = end - 1; i >= start; i--){
+                            if(stop){
+                                toggleButtons();
+                                return stop=false;
+                            }
+                            if(data[i]>data[i+1]){
+                                await waitForSwap(data[i],i+1);
+                                await waitForSwap(data[i+1],i);
+                                let temp = data[i];
+                                data[i] = data[i+1];
+                                data[i+1] = temp;
+                                swapped = true;
+                            }
+                        }
+                        start=start+1;
+                    }
+                    toggleButtons();
+                }
+
+                async function merge(data,start,mid,end){
+                    var start2 = mid + 1;
+                    if(data[mid]<=data[start2]){ return; }
+                    while(start <= mid && start2 <= end){
+                        if(data[start] <= data[start2]){
+                            start++;
+                        }else{
+                            var value = data[start2];
+                            var index = start2;
+                            while(index != start){
+                                if(stop){
+                                    return;
+                                }
+                                await waitForSwap(data[start],start2);
+                                await waitForSwap(data[index-1],index);
+                                data[index] = data[index-1];
+                                index--;
+                            }
+                            await waitForSwap(value,start);
+                            data[start] = value;
+                            start++;
+                            mid++;
+                            start2++;
+                        }
+                    }
+                }
+               async function mergeSort(data,l,r){
+                   if(stop){
+                       return;
+                   }
+                    if(l<r) {
+                        var m = parseInt(l + (r - l) / 2);
+                        await mergeSort(data, l, m);
+                        await mergeSort(data, m + 1, r);
+                        await merge(data, l, m, r);
                     }
                 }
 
@@ -226,26 +363,39 @@
                         .attr("x1",0)
                         .attr("y1",0)
                         .attr("x2",0)
-                        .attr("y2", function(d){ return d; })
+                        .attr("y2", function(d){ return y(d); })
                         .attr("class", function(d){ return "line" + d; })
                         .attr("stroke",function(d){ return colors(d); })
                         .attr("transform",function(d,i){ return "translate(" + x(i) + ")"; });
                 }
 
-                function changeAlgorithm(){
+               async function changeAlgorithm(){
                     let chosenOne = document.getElementById('sAlg').value;
                     switch (chosenOne) {
                         case "Select":
-                            selectSort(data);
+                           await selectSort(data);
+                            break;
+                        case"DoubleSelect":
+                            await doubleSelectSort(data);
                             break;
                         case "Insert":
-                            insertSort(data);
+                            await insertSort(data);
+                            break;
+                        case "Gnome":
+                            await gnomeSort(data);
+                            break;
+                        case "Odd-Even":
+                            await oddEvenSort(data);
+                            break;
+                        case "Cocktail":
+                            await cocktailSort(data);
                             break;
                         case "Merge":
-                            mergeSort(data,0,(data.length - 1));
+                            await mergeSort(data,0,(data.length-1));
+                            toggleButtons();
                             break;
                         default:
-                            bubbSort(data);
+                            await bubbSort(data);
                             break;
                     }
                 }
@@ -257,6 +407,7 @@
                             btn.disabled = false;
                         }else{ btn.disabled = true; }
                     }
+                    if(stop){randomize();}
                 }
             </script>
         </main>
